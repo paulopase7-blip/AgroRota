@@ -1,4 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 void main() => runApp(const AgroRotaApp());
 
@@ -79,11 +83,15 @@ class HomePage extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const PassPlannerPage()),
               ),
             ),
-            const _ToolCard(
-                icon: Icons.map_outlined,
-                title: 'Mapa dos talhões',
-                subtitle: 'Desenho de áreas no mapa por satélite.',
-                comingSoon: true),
+            _ToolCard(
+              icon: Icons.map_outlined,
+              title: 'Mapa dos talhões',
+              subtitle: 'Marque os limites no mapa e calcule hectares.',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FieldMapPage()),
+              ),
+            ),
             const _ToolCard(
                 icon: Icons.agriculture_outlined,
                 title: 'Operações agrícolas',
@@ -398,3 +406,192 @@ class _PassPlannerPageState extends State<PassPlannerPage> {
         ),
       );
 }
+
+
+class FieldMapPage extends StatefulWidget {
+  const FieldMapPage({super.key});
+
+  @override
+  State<FieldMapPage> createState() => _FieldMapPageState();
+}
+
+class _FieldMapPageState extends State<FieldMapPage> {
+  final List<LatLng> points = [];
+  final TextEditingController nameController =
+      TextEditingController(text: 'Talhão 1');
+
+  double get areaHectares {
+    if (points.length < 3) return 0;
+    const earthRadius = 6378137.0;
+    double sum = 0;
+    for (var i = 0; i < points.length; i++) {
+      final current = points[i];
+      final next = points[(i + 1) % points.length];
+      final lat1 = current.latitude * 3.141592653589793 / 180;
+      final lat2 = next.latitude * 3.141592653589793 / 180;
+      final deltaLon =
+          (next.longitude - current.longitude) * 3.141592653589793 / 180;
+      sum += deltaLon * (2 + math.sin(lat1) + math.sin(lat2));
+    }
+    return (sum * earthRadius * earthRadius / 2).abs() / 10000;
+  }
+
+  void addPoint(TapPosition tapPosition, LatLng point) {
+    setState(() => points.add(point));
+  }
+
+  void undoPoint() {
+    if (points.isEmpty) return;
+    setState(() => points.removeLast());
+  }
+
+  void clearPoints() => setState(points.clear);
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final polygonPoints = List<LatLng>.from(points);
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Mapa dos talhões'),
+        actions: [
+          IconButton(
+            tooltip: 'Desfazer último ponto',
+            onPressed: points.isEmpty ? null : undoPoint,
+            icon: const Icon(Icons.undo),
+          ),
+          IconButton(
+            tooltip: 'Limpar desenho',
+            onPressed: points.isEmpty ? null : clearPoints,
+            icon: const Icon(Icons.delete_outline),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: LatLng(-30.5, -55.5),
+                initialZoom: 13,
+                onTap: addPoint,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate:
+                      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                  userAgentPackageName: 'com.agrorota.app',
+                ),
+                if (points.length >= 3)
+                  PolygonLayer(
+                    polygons: [
+                      Polygon(
+                        points: polygonPoints,
+                        color: Colors.green.withValues(alpha: 0.28),
+                        borderColor: const Color(0xFFB7F36B),
+                        borderStrokeWidth: 3,
+                      ),
+                    ],
+                  ),
+                if (points.isNotEmpty)
+                  MarkerLayer(
+                    markers: [
+                      for (var i = 0; i < points.length; i++)
+                        Marker(
+                          point: points[i],
+                          width: 34,
+                          height: 34,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF246B35),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                  color: Colors.white, width: 2),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              '${i + 1}',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                RichAttributionWidget(
+                  attributions: [
+                    TextSourceAttribution(
+                      'Imagens © Esri e fornecedores de imagens',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(color: Colors.black12, blurRadius: 8),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Toque no mapa para marcar os cantos do talhão',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nome do talhão',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        points.length < 3
+                            ? '${points.length} ponto(s) marcado(s) • marque pelo menos 3'
+                            : '${points.length} pontos • Área estimada',
+                        style: const TextStyle(color: Colors.black54),
+                      ),
+                    ),
+                    Text(
+                      '${areaHectares.toStringAsFixed(3)} ha',
+                      style: const TextStyle(
+                        color: Color(0xFF246B35),
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Área calculada a partir dos pontos tocados. Confira os limites em campo. A camada de imagens depende de internet e da disponibilidade/licença do provedor.',
+                  style: TextStyle(fontSize: 11, color: Colors.black54),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
