@@ -29,18 +29,28 @@ Aplicativo Android de planejamento e acompanhamento de operações agrícolas, c
 - Indicar precisão/qualidade do sinal quando disponível.
 - Tratar perda de sinal e avisar que GPS de celular pode não ter precisão suficiente para orientar operações de alta precisão.
 
-### 5. Histórico e gestão
+### 5. GPS de alta precisão e equipamentos
+- Prever integração com receptores GNSS externos compatíveis.
+- Planejar suporte a correções RTK quando o receptor, serviço de correção e região oferecerem suporte.
+- Exibir o estado da conexão, qualidade do posicionamento e alertas de perda de correção.
+- Criar cadastro de máquinas e tratores, com apelido, modelo e configurações.
+- Criar cadastro de implementos: pulverizador, plantadeira, distribuidor e outros.
+- Salvar largura de trabalho, espaçamento e demais configurações por implemento.
+- Permitir selecionar máquina e implemento antes de iniciar uma operação.
+- Desenvolver integrações específicas com monitores e controladores somente após validar os protocolos e formatos de cada fabricante.
+
+### 6. Histórico e gestão
 - Salvar operações por propriedade, talhão, data e tipo.
 - Registrar máquina, implemento, largura, produtos e quantidades informadas.
 - Gerar relatórios de área planejada e realizada, distância e histórico.
 
-### 6. Uso sem internet
+### 7. Uso sem internet
 - Guardar dados, talhões, operações e mapas previamente baixados.
 - Permitir consultar e registrar operações offline.
 - Sincronizar alterações quando a conexão voltar.
 - Respeitar limites de cache e licenças do provedor de mapas.
 
-### 7. Importação e exportação
+### 8. Importação e exportação
 - Planejar suporte a formatos geográficos como GeoJSON e KML.
 - Avaliar formatos de linhas e mapas aceitos por cada marca/modelo de monitor agrícola antes de prometer compatibilidade.
 - Exportar relatórios em PDF/CSV.
@@ -49,12 +59,13 @@ Aplicativo Android de planejamento e acompanhamento de operações agrícolas, c
 1. Base Android compilável e primeira instalação de teste.
 2. Mapa, localização e cadastro de propriedade/talhão.
 3. Desenho de polígonos e cálculo de hectares.
-4. Largura de implemento e geração de linhas de passadas.
+4. Cadastro de máquinas/implementos, largura de trabalho e geração de linhas.
 5. Obstáculos e zonas de exclusão.
 6. GPS em operação e registro de cobertura.
-7. Histórico, relatórios e exportações.
-8. Mapas offline, sincronização e testes em campo.
-9. Compatibilidade de importação/exportação com equipamentos específicos.
+7. Integração GNSS externo e avaliação de RTK.
+8. Histórico, relatórios e exportações.
+9. Mapas offline, sincronização e testes em campo.
+10. Compatibilidade de importação/exportação com equipamentos específicos.
 
 ## Critérios importantes
 - Testar cada etapa no Android antes de avançar.
